@@ -22,7 +22,7 @@
  * major airports and stays within free-tier API rate limits.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { flightRepository } from "../data/repository"
 import { toClock } from "../utils/time"
 import type { Flight } from "../domain/flight"
@@ -30,15 +30,12 @@ import type { Flight } from "../domain/flight"
 const AUTO_REFRESH_MS = 60_000
 
 export type FlightBoardState = {
-  flights:         Flight[]
-  filteredFlights: Flight[]
-  sourceName:      string
-  isLoading:       boolean
-  updatedAt:       string
-  query:           string
-  setQuery:        (q: string) => void
+  flights:    Flight[]
+  sourceName: string
+  isLoading:  boolean
+  updatedAt:  string
   /** Imperatively trigger a data refresh — safe to call while a fetch is in flight. */
-  refresh:         () => void
+  refresh:    () => void
 }
 
 export function useFlightBoard(
@@ -50,7 +47,6 @@ export function useFlightBoard(
   const [sourceName, setSourceName] = useState("—")
   const [isLoading,  setIsLoading]  = useState(true)
   const [updatedAt,  setUpdatedAt]  = useState("--:--")
-  const [query,      setQuery]      = useState("")
 
   /**
    * useCallback stabilises the function reference so the useEffect dependency
@@ -64,7 +60,6 @@ export function useFlightBoard(
       setFlights(result.flights)
       setSourceName(result.sourceName)
     } finally {
-      // Always update the timestamp, even on partial failure.
       setUpdatedAt(toClock(new Date().toISOString()))
       setIsLoading(false)
     }
@@ -87,33 +82,11 @@ export function useFlightBoard(
     return () => clearInterval(id)
   }, [ready, refresh])
 
-  /**
-   * Client-side full-text filter over destination, flight number, and airline
-   * code. useMemo prevents re-filtering on re-renders unrelated to data or query.
-   *
-   * An empty query returns the full unfiltered list (short-circuit avoids the
-   * string operations entirely when the search box is blank).
-   */
-  const filteredFlights = useMemo(() => {
-    const term = query.trim().toLowerCase()
-    if (!term) return flights
-    return flights.filter((f) =>
-      `${f.destination} ${f.flightNumber} ${f.airlineCode}`
-        .toLowerCase()
-        .includes(term),
-    )
-  }, [flights, query])
-
   return {
     flights,
-    filteredFlights,
     sourceName,
     isLoading,
     updatedAt,
-    query,
-    setQuery,
-    // Expose a zero-argument public API — the internal AbortSignal is an
-    // implementation detail the UI has no business knowing about.
     refresh: () => refresh(),
   }
 }

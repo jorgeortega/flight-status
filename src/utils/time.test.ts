@@ -32,8 +32,13 @@ describe("aeroDataBoxTime", () => {
     expect(aeroDataBoxTime("")).toBe("--:--")
   })
 
-  it("returns --:-- when the string contains no space separator", () => {
-    // Defensive: malformed payload without the date/time space separator.
+  it("extracts HH:mm from an ISO 8601 string with T separator", () => {
+    expect(aeroDataBoxTime("2026-04-13T10:30:00+02:00")).toBe("10:30")
+    expect(aeroDataBoxTime("2026-04-13T00:05:00-05:00")).toBe("00:05")
+  })
+
+  it("returns --:-- when the string contains no separator", () => {
+    // Defensive: malformed payload without any date/time separator.
     expect(aeroDataBoxTime("nodatetime")).toBe("--:--")
   })
 })

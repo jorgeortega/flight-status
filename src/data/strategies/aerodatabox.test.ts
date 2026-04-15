@@ -53,6 +53,47 @@ describe("AeroDataBoxStrategy", () => {
     })
   })
 
+  it("reads time from scheduledTime.local when scheduledTimeLocal is absent (v2 API)", async () => {
+    vi.stubEnv("VITE_RAPIDAPI_KEY", "test-key")
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        departures: [{
+          number:   "LH 400",
+          airline:  { iata: "LH", name: "Lufthansa" },
+          movement: {
+            airport:       { iata: "JFK" },
+            scheduledTime: { local: "2026-04-13 10:30+02:00" },
+            gate:          "B22",
+          },
+        }],
+      }),
+    } as Response)
+
+    const rows = await strategy.fetch("FRA")
+    expect(rows[0].departureTime).toBe("10:30")
+  })
+
+  it("reads time from scheduledTime.local in ISO T format (v2 API)", async () => {
+    vi.stubEnv("VITE_RAPIDAPI_KEY", "test-key")
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        departures: [{
+          number:   "LH 400",
+          airline:  { iata: "LH", name: "Lufthansa" },
+          movement: {
+            airport:       { iata: "JFK" },
+            scheduledTime: { local: "2026-04-13T10:30:00+02:00" },
+          },
+        }],
+      }),
+    } as Response)
+
+    const rows = await strategy.fetch("FRA")
+    expect(rows[0].departureTime).toBe("10:30")
+  })
+
   it("falls back to terminal when gate is absent", async () => {
     vi.stubEnv("VITE_RAPIDAPI_KEY", "test-key")
     vi.spyOn(globalThis, "fetch").mockResolvedValue({

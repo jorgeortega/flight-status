@@ -28,8 +28,10 @@ import { aeroDataBoxTime, normaliseStatus } from "../../utils/time"
 /** Movement leg as returned by AeroDataBox when withLeg=false. */
 type AeroDataBoxMovement = {
   airport?: { iata?: string; name?: string }
-  /** "YYYY-MM-DD HH:mm±HH:mm" — airport-local time, non-standard ISO */
+  /** Flat string in older responses: "YYYY-MM-DD HH:mm±HH:mm" */
   scheduledTimeLocal?: string
+  /** Nested object in newer v2 responses */
+  scheduledTime?: { local?: string; utc?: string }
   gate?: string
   terminal?: string
 }
@@ -95,7 +97,10 @@ export class AeroDataBoxStrategy implements FlightDataStrategy {
       destination:   item.movement?.airport?.iata
                   ?? item.movement?.airport?.name
                   ?? "Unknown",
-      departureTime: aeroDataBoxTime(item.movement?.scheduledTimeLocal),
+      // Prefer the flat field (v1); fall back to the nested object (v2).
+      departureTime: aeroDataBoxTime(
+        item.movement?.scheduledTimeLocal ?? item.movement?.scheduledTime?.local,
+      ),
       // Prefer gate; fall back to terminal identifier when gate is unassigned.
       gate:          item.movement?.gate ?? item.movement?.terminal ?? "--",
       status:        normaliseStatus(item.status),

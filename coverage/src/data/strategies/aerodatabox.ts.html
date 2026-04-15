@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">65% </span>
+                <span class="strong">72.72% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>13/20</span>
+                <span class='fraction'>16/22</span>
             </div>
         
             
@@ -167,7 +167,14 @@
 <a name='L102'></a><a href='#L102'>102</a>
 <a name='L103'></a><a href='#L103'>103</a>
 <a name='L104'></a><a href='#L104'>104</a>
-<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -224,22 +231,10 @@
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-yes">7x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -250,12 +245,27 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">6x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-yes">5x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">7x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -301,8 +311,10 @@ import { aeroDataBoxTime, normaliseStatus } from "../../utils/time"
 /** Movement leg as returned by AeroDataBox when withLeg=false. */
 type AeroDataBoxMovement = {
   airport?: { iata?: string; name?: string }
-  /** "YYYY-MM-DD HH:mm±HH:mm" — airport-local time, non-standard ISO */
+  /** Flat string in older responses: "YYYY-MM-DD HH:mm±HH:mm" */
   scheduledTimeLocal?: string
+  /** Nested object in newer v2 responses */
+  scheduledTime?: { local?: string; utc?: string }
   gate?: string
   terminal?: string
 }
@@ -368,9 +380,12 @@ export class AeroDataBoxStrategy implements FlightDataStrategy {
       destination:   item.movement?.airport?.iata
                   ?? <span class="branch-1 cbranch-no" title="branch not covered" >item.movement?.airport?.name</span>
                   ?? <span class="branch-2 cbranch-no" title="branch not covered" >"Unknown",</span>
-      departureTime: aeroDataBoxTime(item.movement?.scheduledTimeLocal),
+      // Prefer the flat field (v1); fall back to the nested object (v2).
+      departureTime: aeroDataBoxTime(
+        item.movement?.scheduledTimeLocal ?? item.movement?.scheduledTime?.local,
+      ),
       // Prefer gate; fall back to terminal identifier when gate is unassigned.
-      gate:          item.movement?.gate ?? item.movement?.terminal ?? <span class="branch-2 cbranch-no" title="branch not covered" >"--",</span>
+      gate:          item.movement?.gate ?? item.movement?.terminal ?? "--",
       status:        normaliseStatus(item.status),
     }))
   }
@@ -382,7 +397,7 @@ export class AeroDataBoxStrategy implements FlightDataStrategy {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-04-14T17:48:44.739Z
+                at 2026-04-15T15:59:06.944Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

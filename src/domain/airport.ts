@@ -119,6 +119,37 @@ export function nearestAirport(lat: number, lon: number): LocalAirport {
 }
 
 /**
+ * Resolves a free-text query (IATA code or city name) to a LocalAirport.
+ *
+ * Resolution order:
+ *   1. Exact 3-letter IATA code (case-insensitive) — any code is accepted
+ *      even if unknown; city name is populated from KNOWN_AIRPORTS when
+ *      available, otherwise the code itself is used as a placeholder.
+ *   2. Case-insensitive prefix match on KNOWN_AIRPORTS city names, then
+ *      a broader substring match as a fallback.
+ *
+ * Returns null when the input is blank or a city-name search finds no match.
+ */
+export function resolveAirport(input: string): LocalAirport | null {
+  const s = input.trim()
+  if (!s) return null
+
+  // 3-letter IATA code — accept any code; look up the city name if known.
+  if (/^[A-Za-z]{3}$/.test(s)) {
+    const iata  = s.toUpperCase()
+    const known = KNOWN_AIRPORTS.find((a) => a.iata === iata)
+    return { iata, city: known?.city ?? iata }
+  }
+
+  // City-name search — prefix match first for precision, then substring.
+  const lower = s.toLowerCase()
+  const match =
+    KNOWN_AIRPORTS.find((a) => a.city.toLowerCase().startsWith(lower)) ??
+    KNOWN_AIRPORTS.find((a) => a.city.toLowerCase().includes(lower))
+  return match ? { iata: match.iata, city: match.city } : null
+}
+
+/**
  * Asynchronous slow-path: requests the device's geolocation and returns the
  * nearest known airport. Resolves `null` in any of these cases:
  *   - Browser does not support geolocation

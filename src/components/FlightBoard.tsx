@@ -24,7 +24,6 @@ type Props = {
   flights:   Flight[]
   isLoading: boolean
   iataCode:  string
-  query:     string
 }
 
 // Column header labels — extracted as a constant so they render consistently
@@ -44,7 +43,7 @@ function BoardPanel({ flights }: { flights: Flight[] }): JSX.Element {
   )
 }
 
-export function FlightBoard({ flights, isLoading, iataCode, query }: Props): JSX.Element {
+export function FlightBoard({ flights, isLoading, iataCode }: Props): JSX.Element {
   if (isLoading) {
     return (
       <div className="board-wrap">
@@ -57,9 +56,7 @@ export function FlightBoard({ flights, isLoading, iataCode, query }: Props): JSX
     return (
       <div className="board-wrap">
         <p className="board-note" aria-live="polite">
-          {query
-            ? `No results for "${query}"`
-            : `No departures found for ${iataCode}`}
+          No departures found for {iataCode}
         </p>
       </div>
     )

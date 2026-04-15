@@ -6,32 +6,45 @@
  * index.css which is loaded globally.
  */
 
-.refresh-btn {
-  background:    #ffd700;
-  color:         #000;
-  border:        none;
-  padding:       8px 16px;
-  font-weight:   bold;
-  text-transform: uppercase;
-  cursor:        pointer;
-  font-family:   "Courier New", Courier, monospace;
-  border-radius: 4px;
-  letter-spacing: 0.04em;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  background: #ffea00;
-}
-
-.refresh-btn:disabled {
-  background: #555;
-  color:      #888;
-  cursor:     not-allowed;
-}
-
 .header-main {
   display:         flex;
   justify-content: space-between;
-  align-items:     center;
+  align-items:     flex-start;
   width:           100%;
+}
+
+.header-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.header-airport {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.header-airport__iata {
+  font-size:      1.1rem;
+  font-weight:    700;
+  color:          #ffd700;
+  letter-spacing: 0.08em;
+  font-family:    "Courier New", Courier, monospace;
+}
+
+.header-airport__city {
+  font-size:      0.85rem;
+  color:          #91add0;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.header-loading {
+  font-size:      0.78rem;
+  color:          #7ca3d1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  align-self:     center;
 }

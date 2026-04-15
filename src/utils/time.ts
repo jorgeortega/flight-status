@@ -22,8 +22,11 @@ export function toClock(value?: string | null): string {
 }
 
 /**
- * Extracts the "HH:mm" portion from AeroDataBox's non-standard local time
- * format: `"YYYY-MM-DD HH:mm±HH:mm"`.
+ * Extracts the "HH:mm" portion from AeroDataBox's local time strings.
+ *
+ * Handles two formats that the API returns depending on version:
+ *   - Space-separated:  "YYYY-MM-DD HH:mm±HH:mm"   (older responses)
+ *   - ISO 8601 with T:  "YYYY-MM-DDTHH:mm:ss±HH:mm" (newer responses)
  *
  * We intentionally do NOT parse this as a Date — that would re-convert
  * through the browser's timezone and produce the wrong local time for
@@ -32,8 +35,9 @@ export function toClock(value?: string | null): string {
  */
 export function aeroDataBoxTime(scheduledTimeLocal?: string): string {
   if (!scheduledTimeLocal) return "--:--"
-  // Split on the space between date and time, then take the first 5 chars.
-  const timePart = scheduledTimeLocal.split(" ")[1]
+  // Detect separator: ISO 8601 uses "T", older AeroDataBox format uses " ".
+  const sep = scheduledTimeLocal.includes("T") ? "T" : " "
+  const timePart = scheduledTimeLocal.split(sep)[1]
   return timePart ? timePart.slice(0, 5) : "--:--"
 }
 

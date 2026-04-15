@@ -1,38 +1,49 @@
 /**
  * SearchBar
  *
- * PATTERN: Controlled Component — value and onChange are owned entirely by
- * the parent (useFlightBoard). The input never manages its own state, making
- * the search behaviour fully testable through the hook alone with no DOM
- * interaction required.
+ * Airport search input. The user types an IATA code ("JFK") or a city name
+ * ("Frankfurt") and presses Enter — the parent resolves the query to an
+ * airport and triggers a fresh data fetch.
  *
- * The visible <label> is visually hidden via .sr-only but present in the
- * accessibility tree for screen readers and automated test selectors
- * (getByLabelText / findByLabelText).
+ * PATTERN: Controlled Component — value and onChange are owned by the parent
+ * (App). The component is a pure function of its props; no internal state.
  */
 
-import type { JSX } from "react"
+import type { JSX, KeyboardEvent } from "react"
 
 type Props = {
   value:    string
   onChange: (value: string) => void
+  onSubmit: (value: string) => void
+  error?:   string | null
 }
 
-export function SearchBar({ value, onChange }: Props): JSX.Element {
+export function SearchBar({ value, onChange, onSubmit, error }: Props): JSX.Element {
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" && value.trim()) {
+      onSubmit(value.trim())
+    }
+  }
+
   return (
     <section className="board-controls">
-      {/* sr-only keeps the label out of the visual layout while preserving a11y */}
-      <label htmlFor="flight-search" className="sr-only">
-        Search departures
+      <label htmlFor="airport-search" className="sr-only">
+        Search by airport code or city
       </label>
-      <input
-        id="flight-search"
-        type="search"
-        placeholder="Search departures..."
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Search departures"
-      />
+      <div className="search-field">
+        <input
+          id="airport-search"
+          type="search"
+          placeholder="Airport code or city (e.g. JFK, Frankfurt)…"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          aria-label="Search by airport code or city"
+        />
+        {error && (
+          <p className="search-field__error" role="alert">{error}</p>
+        )}
+      </div>
     </section>
   )
 }

@@ -101,13 +101,27 @@ body {
   padding: 0.75rem 1rem;
 }
 
-.board-controls input {
+.search-field {
   width: min(460px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.board-controls input {
+  width: 100%;
   background: #051127;
   border: 1px solid #2f4d74;
   color: #d8ecff;
   padding: 0.5rem 0.75rem;
   font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.search-field__error {
+  margin: 0;
+  color: #ff9f9f;
+  font-size: 0.82rem;
   letter-spacing: 0.02em;
 }
 
@@ -193,6 +207,7 @@ body {
   padding: 0.12rem 0.3rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
   width: fit-content;
 }
 
@@ -272,12 +287,26 @@ body {
     border-inline: 0;
   }
 
+  /* Stack title row and meta row vertically so nothing overflows off-screen */
+  .board-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
   .board-header h1 {
     font-size: 1.5rem;
   }
 
+  /* Let date / clock / updated wrap onto two lines rather than overflow right */
+  .header-meta {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+  }
+
   .header-meta strong {
     font-size: 1.1rem;
+    min-width: 0;
   }
 
   .board-controls {
@@ -289,7 +318,31 @@ body {
     width: 100%;
   }
 
+  /* Single-column board — avoids the minmax(460px) min-width forcing overflow */
+  .board-columns {
+    grid-template-columns: 1fr;
+  }
+
   .board-panel {
     border-right: 0;
+  }
+
+  /* Second panel stacks below the first on mobile — its header mid-list is confusing. */
+  .board-panel:not(:first-child) .board-table--head {
+    display: none;
+  }
+
+  /* Rebalance the 6-column grid: give STATUS (last col) 2× share so the badge
+     text ("Boarding", "Departed", etc.) always fits without clipping. */
+  .board-table {
+    grid-template-columns: 1.4fr 1.6fr 1fr 1fr 0.8fr 2fr;
+    gap: 0.3rem;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .airline-cell img {
+    width: 22px;
+    height: 22px;
   }
 }

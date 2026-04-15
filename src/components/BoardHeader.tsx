@@ -1,40 +1,40 @@
 /**
  * BoardHeader
  *
- * PATTERN: Presentational Component — displays the board title, live clock,
- * date, last-updated timestamp, and a manual-refresh trigger. All values are
- * injected as props; this component owns zero state.
- *
- * The clock and boardDate are provided by the parent (App) rather than
- * computed here to keep this component a pure function of its props —
- * easier to snapshot-test and to storybook in isolation.
+ * PATTERN: Presentational Component — displays the board title, active airport,
+ * live clock, date, and last-updated timestamp. All values are injected as
+ * props; this component owns zero state.
  */
 
-import type { JSX } from "react"
+import type { JSX } from "react";
+import type { LocalAirport } from "../domain/airport";
 
 type Props = {
-  clock:      string   // "HH:mm:ss" from useClock
-  boardDate:  string   // formatted date string, stable across re-renders
-  updatedAt:  string   // "HH:mm" timestamp of last successful fetch
-  isLoading:  boolean
-  onRefresh:  () => void
-}
+  airport: LocalAirport; // currently displayed airport (detected or user-selected)
+  clock: string; // "HH:mm:ss" from useClock
+  boardDate: string; // formatted date string, stable across re-renders
+  updatedAt: string; // "HH:mm" timestamp of last successful fetch
+  isLoading: boolean;
+};
 
 export function BoardHeader({
-  clock, boardDate, updatedAt, isLoading, onRefresh,
+  airport,
+  clock,
+  boardDate,
+  updatedAt,
+  isLoading,
 }: Props): JSX.Element {
   return (
     <header className="board-header">
       <div className="header-main">
-        <h1>Gate Summary</h1>
-        <button
-          className="refresh-btn"
-          onClick={onRefresh}
-          disabled={isLoading}
-          aria-label="Refresh flight data"
-        >
-          {isLoading ? "LOADING..." : "REFRESH"}
-        </button>
+        <div className="header-title">
+          <h1>Gate Summary</h1>
+          <p className="header-airport">
+            <span className="header-airport__iata">{airport.iata}</span> (
+            <span className="header-airport__city">{airport.city}</span>)
+          </p>
+        </div>
+        {isLoading && <span className="header-loading">Loading…</span>}
       </div>
       <div className="header-meta">
         <span>{boardDate}</span>
@@ -42,5 +42,5 @@ export function BoardHeader({
         <em>Updated {updatedAt}</em>
       </div>
     </header>
-  )
+  );
 }

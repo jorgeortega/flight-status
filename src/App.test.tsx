@@ -125,21 +125,58 @@ describe("App", () => {
     expect(await screen.findByText(/No departures found for/i)).toBeInTheDocument()
   })
 
-  it("filters rows by search query and shows a no-results message", async () => {
+  it("fetches flights for the airport when the user submits an IATA code", async () => {
     mockFetch().mockResolvedValue({ flights: sampleFlights, sourceName: "AeroDataBox (Live)" })
     render(<App />)
-
     await screen.findByText("LH400")
 
-    const input = screen.getByLabelText("Search departures")
-    await userEvent.type(input, "dubai")
+    mockFetch().mockClear()
+    mockFetch().mockResolvedValue({ flights: [], sourceName: "AeroDataBox (Live)" })
 
-    expect(screen.getByText("EK046")).toBeInTheDocument()
-    expect(screen.queryByText("LH400")).not.toBeInTheDocument()
+    const input = screen.getByLabelText("Search by airport code or city")
+    await userEvent.type(input, "JFK")
+    await userEvent.keyboard("{Enter}")
 
+    await waitFor(() => {
+      expect(flightRepository.fetchDepartures).toHaveBeenCalledWith("JFK", expect.anything())
+    })
+  })
+
+  it("fetches flights for the airport when the user submits a city name", async () => {
+    mockFetch().mockResolvedValue({ flights: sampleFlights, sourceName: "AeroDataBox (Live)" })
+    render(<App />)
+    await screen.findByText("LH400")
+
+    const input = screen.getByLabelText("Search by airport code or city")
+
+    // Navigate to JFK first so the active airport is known and different from FRA.
+    await userEvent.type(input, "JFK")
+    await userEvent.keyboard("{Enter}")
+    await waitFor(() => {
+      expect(flightRepository.fetchDepartures).toHaveBeenCalledWith("JFK", expect.anything())
+    })
+
+    // Now switch to Frankfurt by city name — should resolve to FRA.
+    mockFetch().mockClear()
     await userEvent.clear(input)
-    await userEvent.type(input, "zzz")
-    expect(screen.getByText(/No results for "zzz"/i)).toBeInTheDocument()
+    await userEvent.type(input, "Frankfurt")
+    await userEvent.keyboard("{Enter}")
+
+    await waitFor(() => {
+      expect(flightRepository.fetchDepartures).toHaveBeenCalledWith("FRA", expect.anything())
+    })
+  })
+
+  it("shows an inline error when no airport matches the search input", async () => {
+    mockFetch().mockResolvedValue({ flights: sampleFlights, sourceName: "AeroDataBox (Live)" })
+    render(<App />)
+    await screen.findByText("LH400")
+
+    const input = screen.getByLabelText("Search by airport code or city")
+    await userEvent.type(input, "Narnia")
+    await userEvent.keyboard("{Enter}")
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(/No airport found matching "Narnia"/i)
   })
 
   it("re-fetches on the 60-second auto-refresh interval", async () => {
@@ -239,7 +276,8 @@ describe("App", () => {
       expect(calls.some(([iata]) => iata === "DXB")).toBe(true)
     })
 
-    expect(await screen.findByText(/DXB/)).toBeInTheDocument()
+    // DXB appears in both the header airport display and the footer ticker.
+    expect((await screen.findAllByText(/DXB/)).length).toBeGreaterThan(0)
   })
 
   it("falls back to the timezone airport when geolocation is denied", async () => {

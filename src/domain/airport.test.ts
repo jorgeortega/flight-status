@@ -3,6 +3,7 @@ import {
   detectFromTimezone,
   nearestAirport,
   detectFromGeolocation,
+  resolveAirport,
   DEFAULT_AIRPORT,
 } from "./airport"
 
@@ -101,5 +102,48 @@ describe("detectFromGeolocation", () => {
 
   it("DEFAULT_AIRPORT is FRA", () => {
     expect(DEFAULT_AIRPORT.iata).toBe("FRA")
+  })
+})
+
+describe("resolveAirport", () => {
+  it("resolves a known 3-letter IATA code to an airport with city name", () => {
+    const result = resolveAirport("JFK")
+    expect(result?.iata).toBe("JFK")
+    expect(result?.city).toBe("New York")
+  })
+
+  it("accepts lowercase IATA codes", () => {
+    expect(resolveAirport("fra")?.iata).toBe("FRA")
+  })
+
+  it("accepts unknown 3-letter codes and uses the code as the city placeholder", () => {
+    const result = resolveAirport("MUC")
+    expect(result?.iata).toBe("MUC")
+    expect(result?.city).toBe("MUC")
+  })
+
+  it("resolves a city name prefix to the matching airport", () => {
+    expect(resolveAirport("Frankfurt")?.iata).toBe("FRA")
+    expect(resolveAirport("frank")?.iata).toBe("FRA")
+  })
+
+  it("resolves a city name substring when prefix fails", () => {
+    // "Kuala Lumpur" — searching "lumpur" is a substring match.
+    expect(resolveAirport("lumpur")?.iata).toBe("KUL")
+  })
+
+  it("is case-insensitive for city names", () => {
+    expect(resolveAirport("LONDON")?.iata).toBe("LHR")
+    expect(resolveAirport("amsterdam")?.iata).toBe("AMS")
+  })
+
+  it("returns null for blank input", () => {
+    expect(resolveAirport("")).toBeNull()
+    expect(resolveAirport("   ")).toBeNull()
+  })
+
+  it("returns null when no city name matches", () => {
+    expect(resolveAirport("Narnia")).toBeNull()
+    expect(resolveAirport("xyz123")).toBeNull()
   })
 })
